@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	//removes all spaces from command. 
 	$command = str_replace(" ","", $command);	
 	$command = preg_replace("/\s+/","", $command);
-
+	$command = "BEGIN".$command;
 	//writes data to file
 	fwrite($ardu_compact, $command);	
 	fclose($ardu_compact);
