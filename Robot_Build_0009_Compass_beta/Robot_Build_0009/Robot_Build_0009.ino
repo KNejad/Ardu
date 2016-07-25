@@ -345,12 +345,12 @@ void InExploreMode() {
     if (Forward < 30) {
       Stop();
       if (Left > Right)
-        Turn(500, true); //turn Left 500 milliseconds
+        Turn(90, true); //turn left 90 degrees
       else
-        Turn(500, false); //turn right 500 milliseconds
+        Turn(90, false); //turn right 90 degrees
     }
-    if (Left < 30) Turn(250, false);
-    if (Right < 30)Turn(250, true);
+    if (Left < 30) Turn(45, false);
+    if (Right < 30)Turn(45, true);
   }
 }
 
@@ -389,7 +389,7 @@ void Turn(int Degrees, boolean TurnLeft) {
       DegreesTo = DegreesDifference;
     }
     while (DegreesNow != DegreesTo) {
-      LeftWheel.write(0);
+      LeftWheel.write(180);
       RightWheel.write(180);
       DegreesNow = comp();
     }
@@ -403,7 +403,7 @@ void Turn(int Degrees, boolean TurnLeft) {
       DegreesTo = DegreesDifference;
     }
     while (DegreesNow != DegreesTo) {
-      LeftWheel.write(180);
+      LeftWheel.write(0);
       RightWheel.write(0);
       DegreesNow = comp();
     }
