@@ -1,11 +1,10 @@
-//build number:0008
-//version created on the: 19/7/2016
+//build number:0009
+//version created on the: 24/7/2016
 //DESCRIPTION: fully functioning vehicle with an lcd display showing relavent info. Running on an Arduino Mega.  With a pololu sensor.
 
 
 //Changes from last build:
-//Replaced Uno and Due with Mega
-//Polulu turns off when not used
+//use compass to turn the robot
 
 //equipment used:
 //2 servos half rotation converted to full rotation by sticking the potentiometer to 90 degrees
@@ -14,6 +13,8 @@
 //1 pololu IR Beacon
 //1 Arduino Mega
 //1 bluetooth tranciever
+//1 digital compass
+
 
 //for the sharp IRsensor on the back of the arduino
 //#include <SharpIR.h>
@@ -49,6 +50,23 @@
 #define PoluluPower 32
 #define PoluluE 33
 
+// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
+// is used in I2Cdev.h
+#include "Wire.h"
+
+// I2Cdev and HMC5883L must be installed as libraries, or else the .cpp/.h files
+// for both classes must be in the include path of your project
+#include "I2Cdev.h"
+#include "HMC5883L.h"
+
+// class default I2C address is 0x1E
+// specific I2C addresses may be passed as a parameter here
+// this device only supports one I2C address (0x1E)
+HMC5883L mag;
+
+//to use for the raw data of the compass
+int16_t mx, my, mz;
+
 #include <LiquidCrystal.h>
 
 // initialize the lcd with the numbers of the interface pins
@@ -69,6 +87,11 @@ void setup() {
 
   //first thing it does is stop just incase the servos where still moving from before
   Stop();
+
+  //join I2C bus
+  Wire.begin();
+  //initialize devise
+  mag.initialize();
 
   LeftWheel.attach(8);
   RightWheel.attach(9);
@@ -100,7 +123,7 @@ void loop() {
     char Character = Serial.read();
 
     if (Character == 'B') {
-       Stop();
+      Stop();
       lcd.clear();
       lcd.println("Bluetooth Mode");
       delay(1000);
@@ -109,7 +132,7 @@ void loop() {
       BluetoothMode = true;
     }
     if (Character == 'F') {
-       Stop();
+      Stop();
       lcd.clear();
       lcd.println("Follow Mode");
       delay(1000);
@@ -118,7 +141,7 @@ void loop() {
       BluetoothMode = false;
     }
     if (Character == 'E') {
-       Stop();
+      Stop();
       lcd.clear();
       lcd.println("Explore Mode");
       delay(1000);
@@ -129,59 +152,59 @@ void loop() {
   }
 
 
-    if (analogRead(AnalogButton) < 40) {
-      Stop();
-      lcd.clear();
-      lcd.println("Follow Mode");
-      delay(1000);
-      FollowMode = true;
-      ExploreMode = false;
-      BluetoothMode = false;
-    }
-    if (100 < analogRead(AnalogButton) && analogRead(AnalogButton) < 260  ) {
-      Stop();
-      lcd.clear();
-      lcd.println("Explore Mode");
-      delay(1000);
-      FollowMode = false;
-      ExploreMode = true;
-      BluetoothMode = false;
-    }
-    if (300 < analogRead(AnalogButton) && analogRead(AnalogButton) < 500  ) {
-      Stop();
-      lcd.clear();
-      lcd.println("Bluetooth Mode");
-      delay(1000);
-      FollowMode = false;
-      ExploreMode = false;
-      BluetoothMode = true;
-    }
-
-    if (FollowMode) {
-      digitalWrite(PoluluPower , HIGH); //Turns the Polulu sensor on
-      digitalWrite(PoluluE , HIGH); //Turns the Polulu E pin on
-      InFollowMode();
-    }
-    if (ExploreMode) {
-      digitalWrite(PoluluPower , LOW);
-      digitalWrite(PoluluPower , LOW);
-      InExploreMode();
-    }
-    if (BluetoothMode) {
-      digitalWrite(PoluluPower , LOW);      
-      digitalWrite(PoluluE , LOW);
-      InBluetoothMode();
-    }
+  if (analogRead(AnalogButton) < 40) {
+    Stop();
+    lcd.clear();
+    lcd.println("Follow Mode");
+    delay(1000);
+    FollowMode = true;
+    ExploreMode = false;
+    BluetoothMode = false;
+  }
+  if (100 < analogRead(AnalogButton) && analogRead(AnalogButton) < 260  ) {
+    Stop();
+    lcd.clear();
+    lcd.println("Explore Mode");
+    delay(1000);
+    FollowMode = false;
+    ExploreMode = true;
+    BluetoothMode = false;
+  }
+  if (300 < analogRead(AnalogButton) && analogRead(AnalogButton) < 500  ) {
+    Stop();
+    lcd.clear();
+    lcd.println("Bluetooth Mode");
+    delay(1000);
+    FollowMode = false;
+    ExploreMode = false;
+    BluetoothMode = true;
   }
 
-  /* ------------------------------(Modes)------------------------------*/
+  if (FollowMode) {
+    digitalWrite(PoluluPower , HIGH); //Turns the Polulu sensor on
+    digitalWrite(PoluluE , HIGH); //Turns the Polulu E pin on
+    InFollowMode();
+  }
+  if (ExploreMode) {
+    digitalWrite(PoluluPower , LOW);
+    digitalWrite(PoluluPower , LOW);
+    InExploreMode();
+  }
+  if (BluetoothMode) {
+    digitalWrite(PoluluPower , LOW);
+    digitalWrite(PoluluE , LOW);
+    InBluetoothMode();
+  }
+}
 
-  void InBluetoothMode() {
-    if (Serial.available() > 0) {
-      char Character = Serial.read();
+/* ------------------------------(Modes)------------------------------*/
+
+void InBluetoothMode() {
+  if (Serial.available() > 0) {
+    char Character = Serial.read();
 
     if (Character == 'B') {
-       Stop();
+      Stop();
       lcd.clear();
       lcd.println("Bluetooth Mode");
       delay(1000);
@@ -190,7 +213,7 @@ void loop() {
       BluetoothMode = true;
     }
     if (Character == 'F') {
-       Stop();
+      Stop();
       lcd.clear();
       lcd.println("Follow Mode");
       delay(1000);
@@ -199,7 +222,7 @@ void loop() {
       BluetoothMode = false;
     }
     if (Character == 'E') {
-       Stop();
+      Stop();
       lcd.clear();
       lcd.println("Explore Mode");
       delay(1000);
@@ -207,285 +230,313 @@ void loop() {
       ExploreMode = true;
       BluetoothMode = false;
     }
-    
-      if (Character == 'L') {
-        Turn(1, true);
-        lcd.clear();
-        lcd.println("Left");
-      }
-      if (Character == 'R') {
-        Turn(1, false);
-        lcd.clear();
-        lcd.println("Right");
-      }
-      if (Character == 'U') {
-        lcd.clear();
-        lcd.println("Forwards");
-        MoveForward();
-      }
-      if (Character == 'D') {
-        lcd.clear();
-        lcd.println("Backwards");
-        MoveBackwards();
-      }
-      delay(150); //gives time for the next command to come through
-    } else {
-      Stop();
+
+    if (Character == 'L') {
+      Turn(1, true);
+      lcd.clear();
+      lcd.println("Left");
     }
-
-
-
-
+    if (Character == 'R') {
+      Turn(1, false);
+      lcd.clear();
+      lcd.println("Right");
+    }
+    if (Character == 'U') {
+      lcd.clear();
+      lcd.println("Forwards");
+      MoveForward();
+    }
+    if (Character == 'D') {
+      lcd.clear();
+      lcd.println("Backwards");
+      MoveBackwards();
+    }
+    delay(150); //gives time for the next command to come through
+  } else {
+    Stop();
   }
 
-  void InFollowMode() {
 
-    char BeaconLocation = LookForBeacon();
 
-    if (BeaconLocation == 'N') {
 
-      //Serial.println("NORTH");
-      if (LookForward() > DangerDistance && LookLeft() > DangerDistance && LookRight() > DangerDistance) {
-        lcd.clear();
-        lcd.print("I'm coming");
-        MoveForward();
-      }
-      else {
-        lcd.clear();
-        lcd.print("I'll try to come");
-        Stop();
-        if (LookForward() < DangerDistance) {
-          if (LookLeft() > LookRight()) {
-            Turn(1, true);
+}
 
-          } else {
-            Turn(1, false);
-          }
-          if (LookForward() > DangerDistance && LookLeft() > DangerDistance && LookRight() > DangerDistance) {
-            MoveForward();
-            delay(500);
-            Stop();
-          }
-        }
-        else if (LookLeft() < DangerDistance) {
-          Turn(1, false);
-        } else {
+void InFollowMode() {
+
+  char BeaconLocation = LookForBeacon();
+
+  if (BeaconLocation == 'N') {
+
+    //Serial.println("NORTH");
+    if (LookForward() > DangerDistance && LookLeft() > DangerDistance && LookRight() > DangerDistance) {
+      lcd.clear();
+      lcd.print("I'm coming");
+      MoveForward();
+    }
+    else {
+      lcd.clear();
+      lcd.print("I'll try to come");
+      Stop();
+      if (LookForward() < DangerDistance) {
+        if (LookLeft() > LookRight()) {
           Turn(1, true);
+
+        } else {
+          Turn(1, false);
+        }
+        if (LookForward() > DangerDistance && LookLeft() > DangerDistance && LookRight() > DangerDistance) {
+          MoveForward();
+          delay(500);
+          Stop();
         }
       }
-      return;
+      else if (LookLeft() < DangerDistance) {
+        Turn(1, false);
+      } else {
+        Turn(1, true);
+      }
     }
-
-    if (BeaconLocation == 'E') {
-      //Serial.println("East");
-      lcd.clear();
-      lcd.print("To my right");
-      TurnTillNorth(false);
-      return;
-    }
-    if (BeaconLocation == 'W') {
-      //Serial.println("West");
-      lcd.clear();
-      lcd.print("To my left");
-      TurnTillNorth(true);
-      return;
-    }
-    if (BeaconLocation == 'S') {
-      //Serial.println("South");
-      lcd.clear();
-      lcd.print("Behind me");
-      TurnTillNorth(true);
-      return;
-    }
-    if (BeaconLocation == 'O') {
-      Serial.println("UNKNOWN");
-      Stop();
-      lcd.clear();
-      lcd.print("Where are you?");
-    }
+    return;
   }
 
-  void InExploreMode() {
-    delay(100);//makes the lcd refresh smoother
+  if (BeaconLocation == 'E') {
+    //Serial.println("East");
+    lcd.clear();
+    lcd.print("To my right");
+    TurnTillNorth(false);
+    return;
+  }
+  if (BeaconLocation == 'W') {
+    //Serial.println("West");
+    lcd.clear();
+    lcd.print("To my left");
+    TurnTillNorth(true);
+    return;
+  }
+  if (BeaconLocation == 'S') {
+    //Serial.println("South");
+    lcd.clear();
+    lcd.print("Behind me");
+    TurnTillNorth(true);
+    return;
+  }
+  if (BeaconLocation == 'O') {
+    Serial.println("UNKNOWN");
+    Stop();
+    lcd.clear();
+    lcd.print("Where are you?");
+  }
+}
 
+void InExploreMode() {
+  delay(100);//makes the lcd refresh smoother
+
+  int Left = LookLeft();
+  int Right = LookRight();
+  int Forward = LookForward();
+
+  PrintDistance(Left, Forward, Right);
+
+  if (Left > DangerDistance && Forward > DangerDistance && Right > DangerDistance) {
+    MoveForward();
+    lcd.setCursor(0, 0);
+    lcd.print("Moving forward!");
+  } else {
+    if (Forward < 30) {
+      Stop();
+      if (Left > Right)
+        Turn(90, true); //turn left 90 degrees
+      else
+        Turn(90, false); //turn right 90 degrees
+    }
+    if (Left < 30) Turn(45, false);
+    if (Right < 30)Turn(45, true);
+  }
+}
+
+/* ------------------------------(Moving)------------------------------*/
+void MoveForward() {
+  //they are different directions because the servos are looking in the opposite direction
+  LeftWheel.write(180);//turns clockwise constantly;
+  RightWheel.write(0);//turns counter-clockwise constantly;
+  //Serial.println ("--Moving--");
+}
+void MoveBackwards() {
+  //they are different directions because the servos are looking in the opposite direction
+  LeftWheel.write(0);//turns clockwise constantly;
+  RightWheel.write(180);//turns counter-clockwise constantly;
+  //Serial.println ("--Moving Backwards--");
+}
+
+void Stop() {
+  //Serial.print("Stoping...");
+  LeftWheel.write(90);//stops left wheel
+  RightWheel.write(90);//stops right wheel
+  //Serial.println ("Done");
+}
+
+//accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
+void Turn(int Degrees, boolean TurnLeft) {
+  float DegreesNow, DegreesDifference, DegreesTo;
+  //Serial.print("Turning...");
+  //if TurnLeft is true turns left else turns right
+  if (TurnLeft) {
+    DegreesNow = comp();
+    DegreesDifference = DegreesNow - Degrees;
+    if (DegreesDifference < 0) {
+      DegreesTo = 360 + DegreesDifference;
+    } else {
+      DegreesTo = DegreesDifference;
+    }
+    while (DegreesNow != DegreesTo) {
+      LeftWheel.write(180);
+      RightWheel.write(180);
+      DegreesNow = comp();
+    }
+    Stop();
+  }else{
+    DegreesNow = comp();
+    DegreesDifference = DegreesNow + Degrees;
+    if (DegreesDifference > 360) {
+      DegreesTo = DegreesDifference - 360;
+    } else {
+      DegreesTo = DegreesDifference;
+    }
+    while (DegreesNow != DegreesTo) {
+      LeftWheel.write(0);
+      RightWheel.write(0);
+      DegreesNow = comp();
+    }
+    Stop();
+
+  }
+
+
+ /* while (Time < TimeTillFinish) {
+    if (TurnLeft) {
+      lcd.setCursor(0, 0);
+      lcd.print("                ");
+      lcd.setCursor(0, 0);
+      lcd.print("Turn left: " + String(TimeTillFinish - Time));
+    }
+    else {
+      lcd.setCursor(0, 0);
+      lcd.print("                ");
+      lcd.setCursor(0, 0);
+      lcd.print("Turn right: " + String(TimeTillFinish - Time));
+    }
+    Time = millis();
     int Left = LookLeft();
     int Right = LookRight();
     int Forward = LookForward();
-
     PrintDistance(Left, Forward, Right);
+    delay(100);
+  }
+} */
+//Serial.println ("Done");
+}
 
-    if (Left > DangerDistance && Forward > DangerDistance && Right > DangerDistance) {
-      MoveForward();
-      lcd.setCursor(0, 0);
-      lcd.print("Moving forward!");
-    } else {
-      if (Forward < 30) {
-        Stop();
-        if (Left > Right)
-          Turn(500, true); //turn Left 500 milliseconds
-        else
-          Turn(500, false); //turn right 500 milliseconds
-      }
-      if (Left < 30) Turn(250, false);
-      if (Right < 30)Turn(250, true);
-    }
+//accepts the Direction which it should turn in (True=Left False=Right)
+void TurnTillNorth(boolean Direction) {
+  boolean North = digitalRead(NorthIRBeacon);
+
+  int Timer = 0;
+  while (North && Timer < 100) {
+    North = digitalRead(NorthIRBeacon);
+    Turn(1, Direction);
+    Timer++;
+  }
+}
+/* ------------------------------(Looking)------------------------------*/
+
+//returns the letter of the direction N E S W or O if it cant determine the location of the beacon
+char LookForBeacon() {
+
+  //checks the distances 5 times to get an average of where is the best option
+  int NorthCounter = 0;
+  int EastCounter = 0;
+  int SouthCounter = 0;
+  int WestCounter = 0;
+  for (int i = 0; i < 5; i++) {
+    delay(50);
+    if (!digitalRead(NorthIRBeacon))
+      NorthCounter++;
+    if (!digitalRead(EastIRBeacon))
+      EastCounter++;
+    if (!digitalRead(SouthIRBeacon))
+      SouthCounter++;
+    if (!digitalRead(WestIRBeacon))
+      WestCounter++;
   }
 
-  /* ------------------------------(Moving)------------------------------*/
-  void MoveForward() {
-    //they are different directions because the servos are looking in the opposite direction
-    LeftWheel.write(180);//turns clockwise constantly;
-    RightWheel.write(0);//turns counter-clockwise constantly;
-    //Serial.println ("--Moving--");
-  }
-  void MoveBackwards() {
-    //they are different directions because the servos are looking in the opposite direction
-    LeftWheel.write(0);//turns clockwise constantly;
-    RightWheel.write(180);//turns counter-clockwise constantly;
-    //Serial.println ("--Moving Backwards--");
-  }
+  if (NorthCounter > EastCounter && NorthCounter > SouthCounter && NorthCounter > WestCounter)
+    return 'N';
+  else if ((EastCounter > NorthCounter && EastCounter > SouthCounter && EastCounter > WestCounter) ||
+           (NorthCounter == EastCounter && NorthCounter != 0) ||
+           (SouthCounter == EastCounter && SouthCounter != 0))
+    return 'E';
+  else if (SouthCounter > EastCounter && SouthCounter > NorthCounter && SouthCounter > WestCounter)
+    return 'S';
+  else if ((WestCounter > EastCounter && WestCounter > SouthCounter && WestCounter > NorthCounter)  ||
+           (NorthCounter == WestCounter && NorthCounter != 0) ||
+           (SouthCounter == WestCounter && SouthCounter != 0))
+    return 'W';
+  else
+    return 'O';
+}
 
-  void Stop() {
-    //Serial.print("Stoping...");
-    LeftWheel.write(90);//stops left wheel
-    RightWheel.write(90);//stops right wheel
-    //Serial.println ("Done");
-  }
+int LookForward() {
+  int Centimeters = UltrasonicCheckDistance(FrontUltrasonicTrig, FrontUltrasonicEcho);
+  //Serial.print("Centimeters To obstacle:  ");
+  //Serial.println(Centimeters);
+  return Centimeters;
+}
+int LookLeft() {
+  int Centimeters = UltrasonicCheckDistance(LeftUltrasonicTrig, LeftUltrasonicEcho);
+  return Centimeters;
+}
+int LookRight() {
+  int Centimeters = UltrasonicCheckDistance(RightUltrasonicTrig, RightUltrasonicEcho);
+  return Centimeters;
+}
 
-  //accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
-  void Turn(int TurningTime, boolean TurnLeft) {
-    int val = 90;
-    //Serial.print("Turning...");
+int UltrasonicCheckDistance(int Trig, int Echo) {
+  // delay(50); // the delay is to verify that a previous check won't interfier with this one
+  long Duration;
+  // The sensor is triggered by a HIGH pulse of 10 or more microseconds.
+  // Give a short LOW pulse beforehand to ensure a clean HIGH pulse:
+  digitalWrite(Trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(Trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(Trig, LOW);
+  Duration = pulseIn(Echo, HIGH);
+  // convert the time into a distance
+  int Centimeters = Duration / 29 / 2;
+  return Centimeters;
+}
 
-    //if TurnLeft is true turns left else turns right
-    if (TurnLeft) {
-      val = 0;
-    }
-    else {
-      val = 180;
-    }
-    LeftWheel.write(val);
-    RightWheel.write(val);
+/* ------------------------------(Printing to lcd)------------------------------*/
 
-    //delays until complete without updating lcd (only for short turns <100 ms)
-    if (TurningTime < 100) {
-      delay(TurningTime);
-    } else {
-      //waits until turn completes while updating lcd
-      int Time = millis();
-      int TimeTillFinish = TurningTime + Time;
+void  PrintDistance(int Left, int Forward, int Right) {
+  //clears the second line
+  lcd.setCursor(0, 1);
+  lcd.print("                ");
+  lcd.setCursor(0, 1);
+  String Distances = "L" + String(Left) + " C" + String(Forward) + " R" + String(Right);
+  lcd.print(Distances);
+}
+/*-----------------------------(Compass)-------------------------------------------*/
+//it returns the heading in degrees
+float comp() {
+  // read raw heading measurements from device
+  mag.getHeading(&mx, &my, &mz);
 
-      while (Time < TimeTillFinish) {
-        if (TurnLeft) {
-          lcd.setCursor(0, 0);
-          lcd.print("                ");
-          lcd.setCursor(0, 0);
-          lcd.print("Turn left: " + String(TimeTillFinish - Time));
-        }
-        else {
-          lcd.setCursor(0, 0);
-          lcd.print("                ");
-          lcd.setCursor(0, 0);
-          lcd.print("Turn right: " + String(TimeTillFinish - Time));
-        }
-        Time = millis();
-        int Left = LookLeft();
-        int Right = LookRight();
-        int Forward = LookForward();
-        PrintDistance(Left, Forward, Right);
-        delay(100);
-      }
-    }
-    //Serial.println ("Done");
-  }
+  // To calculate heading in degrees. 0 degree indicates North
+  float heading = atan2(my, mx);
+  if (heading < 0)
+    heading += 2 * M_PI;
+  heading = heading * 180 / M_PI;
+}
 
-  //accepts the Direction which it should turn in (True=Left False=Right)
-  void TurnTillNorth(boolean Direction) {
-    boolean North = digitalRead(NorthIRBeacon);
 
-    int Timer = 0;
-    while (North && Timer < 100) {
-      North = digitalRead(NorthIRBeacon);
-      Turn(1, Direction);
-      Timer++;
-    }
-  }
-  /* ------------------------------(Looking)------------------------------*/
-
-  //returns the letter of the direction N E S W or O if it cant determine the location of the beacon
-  char LookForBeacon() {
-
-    //checks the distances 5 times to get an average of where is the best option
-    int NorthCounter = 0;
-    int EastCounter = 0;
-    int SouthCounter = 0;
-    int WestCounter = 0;
-    for (int i = 0; i < 5; i++) {
-      delay(50);
-      if (!digitalRead(NorthIRBeacon))
-        NorthCounter++;
-      if (!digitalRead(EastIRBeacon))
-        EastCounter++;
-      if (!digitalRead(SouthIRBeacon))
-        SouthCounter++;
-      if (!digitalRead(WestIRBeacon))
-        WestCounter++;
-    }
-
-    if (NorthCounter > EastCounter && NorthCounter > SouthCounter && NorthCounter > WestCounter)
-      return 'N';
-    else if ((EastCounter > NorthCounter && EastCounter > SouthCounter && EastCounter > WestCounter) ||
-             (NorthCounter == EastCounter && NorthCounter != 0) ||
-             (SouthCounter == EastCounter && SouthCounter != 0))
-      return 'E';
-    else if (SouthCounter > EastCounter && SouthCounter > NorthCounter && SouthCounter > WestCounter)
-      return 'S';
-    else if ((WestCounter > EastCounter && WestCounter > SouthCounter && WestCounter > NorthCounter)  ||
-             (NorthCounter == WestCounter && NorthCounter != 0) ||
-             (SouthCounter == WestCounter && SouthCounter != 0))
-      return 'W';
-    else
-      return 'O';
-  }
-
-  int LookForward() {
-    int Centimeters = UltrasonicCheckDistance(FrontUltrasonicTrig, FrontUltrasonicEcho);
-    //Serial.print("Centimeters To obstacle:  ");
-    //Serial.println(Centimeters);
-    return Centimeters;
-  }
-  int LookLeft() {
-    int Centimeters = UltrasonicCheckDistance(LeftUltrasonicTrig, LeftUltrasonicEcho);
-    return Centimeters;
-  }
-  int LookRight() {
-    int Centimeters = UltrasonicCheckDistance(RightUltrasonicTrig, RightUltrasonicEcho);
-    return Centimeters;
-  }
-
-  int UltrasonicCheckDistance(int Trig, int Echo) {
-    // delay(50); // the delay is to verify that a previous check won't interfier with this one
-    long Duration;
-    // The sensor is triggered by a HIGH pulse of 10 or more microseconds.
-    // Give a short LOW pulse beforehand to ensure a clean HIGH pulse:
-    digitalWrite(Trig, LOW);
-    delayMicroseconds(2);
-    digitalWrite(Trig, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(Trig, LOW);
-    Duration = pulseIn(Echo, HIGH);
-    // convert the time into a distance
-    int Centimeters = Duration / 29 / 2;
-    return Centimeters;
-  }
-
-  /* ------------------------------(Printing to lcd)------------------------------*/
-
-  void  PrintDistance(int Left, int Forward, int Right) {
-    //clears the second line
-    lcd.setCursor(0, 1);
-    lcd.print("                ");
-    lcd.setCursor(0, 1);
-    String Distances = "L" + String(Left) + " C" + String(Forward) + " R" + String(Right);
-    lcd.print(Distances);
-  }

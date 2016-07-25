@@ -1,1 +1,0 @@
-The code needs these two libraries (ÇÌC5883L,I2Cdev)
