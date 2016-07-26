@@ -12,9 +12,9 @@ Equipment Used:
 1 bluetooth tranciever
 1 digital compass
 
+##Modes:
 
-
-#Bluetooth:
+###Bluetooth:
 App: Arduino Bluetooth Controller (Estado's ltd.)
 Set keys to:
 Up: U
@@ -25,7 +25,7 @@ Bluetooth Mode: B
 Follow Mode: F
 Explore Mode: E
 
-#Wifi
+###Wifi:
 
 go to knejad.co.uk/ardu-server/ardu.php
 
@@ -39,4 +39,8 @@ R: Right (Degrees)
 F: Forwards (Milliseconds)
 B: Backwards (Milliseconds)
 
+###Follow:
+Follows a polulu IR sensor which the user holds
 
+###Explore:
+Explores on its own whilst avoiding obstacles
