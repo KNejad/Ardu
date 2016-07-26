@@ -1,23 +1,27 @@
-#define LeftUltrasonicTrig  50 //was 8
-#define LeftUltrasonicEcho  51 //was 9
-#define FrontUltrasonicTrig 48 //was 10
-#define FrontUltrasonicEcho 49 //was 11
-#define RightUltrasonicTrig 52 //was 12
-#define RightUltrasonicEcho 53 //was 13
+//distance sensors
+#define LeftUltrasonicTrig  50 
+#define LeftUltrasonicEcho  51 
+#define FrontUltrasonicTrig 48 
+#define FrontUltrasonicEcho 49 
+#define RightUltrasonicTrig 52 
+#define RightUltrasonicEcho 53 
 
-#define NorthIRBeacon 24 //was A2
-#define EastIRBeacon 26  //was A3
-#define SouthIRBeacon 28 //was A4
-#define WestIRBeacon 30  //was A5
+
+//polulu beacons
+#define NorthIRBeacon 24 
+#define EastIRBeacon 26  
+#define SouthIRBeacon 28 
+#define WestIRBeacon 30  
 
 //the 5 buttons on the lcd shield used for changing mode
 #define AnalogButton A0
 
+//Power and E pins of polulu sensor
 #define PoluluPower 32
 #define PoluluE 33
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
+// is used in I2Cdev.h (Compass)
 #include "Wire.h"
 
 // I2Cdev and HMC5883L must be installed as libraries, or else the .cpp/.h files
@@ -33,6 +37,31 @@ HMC5883L mag;
 //to use for the raw data of the compass
 int16_t mx, my, mz;
 
+
+//For wifi mode
+#include <SPI.h>
+#include <WiFi.h>
+
+char ssid[] = "ssid"; //  your network SSID (name)
+char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
+int keyIndex = 0;            // your network key Index number (needed only for WEP)
+
+int status = WL_IDLE_STATUS;
+
+char server[] = "www.knejad.co.uk";    // name address for server (using DNS)
+
+//response from the server
+String response = "";
+
+boolean WiFiReady = false;
+
+// Initialize the Ethernet client library
+// with the IP address and port of the server
+// that you want to connect to (port 80 is default for HTTP):
+WiFiClient client;
+
+
+
 #include <LiquidCrystal.h>
 
 // initialize the lcd with the numbers of the interface pins
@@ -46,7 +75,9 @@ Servo RightWheel;
 boolean FollowMode = false;
 boolean ExploreMode = true;
 boolean BluetoothMode = false;
+boolean WiFiMode = false;
 
+//distance where it turns
 int DangerDistance = 10;
 
 void setup() {
@@ -96,6 +127,7 @@ void loop() {
       FollowMode = false;
       ExploreMode = false;
       BluetoothMode = true;
+      WiFiMode = false;
     }
     if (Character == 'F') {
       Stop();
@@ -105,6 +137,7 @@ void loop() {
       FollowMode = true;
       ExploreMode = false;
       BluetoothMode = false;
+      WiFiMode = false;
     }
     if (Character == 'E') {
       Stop();
@@ -114,6 +147,17 @@ void loop() {
       FollowMode = false;
       ExploreMode = true;
       BluetoothMode = false;
+      WiFiMode = false;
+    }
+    if (Character == 'W') {
+      Stop();
+      lcd.clear();
+      lcd.println("WiFi Mode");
+      delay(1000);
+      FollowMode = false;
+      ExploreMode = false;
+      BluetoothMode = false;
+      WiFiMode = false;
     }
   }
 
@@ -160,6 +204,39 @@ void loop() {
     digitalWrite(PoluluPower , LOW);
     digitalWrite(PoluluE , LOW);
     InBluetoothMode();
+  }
+  if (WiFiMode) {
+    digitalWrite(PoluluPower , LOW);
+    digitalWrite(PoluluE , LOW);
+    if (!WiFiReady) {
+      WiFiReady = true;
+      // check for the presence of the shield:
+      if (WiFi.status() == WL_NO_SHIELD) {
+        Serial.println("WiFi shield not present");
+        // don't continue:
+        while (true);
+      }
+
+      String fv = WiFi.firmwareVersion();
+      if (fv != "1.1.0") {
+        Serial.println("Please upgrade the firmware");
+      }
+
+      // attempt to connect to Wifi network:
+      while (status != WL_CONNECTED) {
+        Serial.print("Attempting to connect to SSID: ");
+        Serial.println(ssid);
+        // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+        status = WiFi.begin(ssid, pass);
+
+        // wait 10 seconds for connection:
+        delay(10000);
+      }
+      Serial.println("Connected to wifi");
+
+      makeGet();
+    }
+    InWiFiMode();
   }
 }
 
@@ -320,6 +397,55 @@ void InExploreMode() {
   }
 }
 
+void InWiFiMode() {
+  // if there are incoming bytes available
+  // from the server, read them and print them:
+  while (client.available()) {
+    char c = client.read();
+    response += c;
+  }
+
+  // if the server's disconnected, stop the client:
+  if (!client.connected()) {
+    Serial.println();
+    Serial.println("disconnecting from server.");
+    client.stop();
+
+    int from = response.indexOf("BEGIN") + 5;
+    String command = response.substring(from);
+    boolean done = false;
+    while (!done) {
+      char instruction = command.charAt(0);
+      if ( instruction == 'F') {
+        Serial.print("Moving Forwards:");
+      } else {
+        if ( instruction == 'L') {
+          Serial.print("Turning Left:");
+        } else {
+          if ( instruction == 'R') {
+            Serial.print("Turning Right:");
+          } else {
+            if ( instruction == 'B') {
+              Serial.print("Moving Backwards:");
+            }
+          }
+        }
+      }
+
+      command = command.substring(1);
+      int cut = command.indexOf(";");
+      int amount =  command.substring(0, cut).toInt();
+      Serial.println(amount);
+      command = command.substring(cut + 1);
+      if (command.length() < 1) {
+        done = true;
+      }
+    }
+    //do nothing for 20 seconds then start over
+    delay(20000);
+    makeGet();
+  }
+}
 /* ------------------------------(Moving)------------------------------*/
 void MoveForward() {
   //they are different directions because the servos are looking in the opposite direction
@@ -360,7 +486,7 @@ void Turn(int Degrees, boolean TurnLeft) {
       DegreesNow = comp();
     }
     Stop();
-  }else{
+  } else {
     DegreesNow = comp();
     DegreesDifference = DegreesNow + Degrees;
     if (DegreesDifference > 360) {
@@ -378,28 +504,28 @@ void Turn(int Degrees, boolean TurnLeft) {
   }
 
 
- /* while (Time < TimeTillFinish) {
-    if (TurnLeft) {
-      lcd.setCursor(0, 0);
-      lcd.print("                ");
-      lcd.setCursor(0, 0);
-      lcd.print("Turn left: " + String(TimeTillFinish - Time));
+  /* while (Time < TimeTillFinish) {
+     if (TurnLeft) {
+       lcd.setCursor(0, 0);
+       lcd.print("                ");
+       lcd.setCursor(0, 0);
+       lcd.print("Turn left: " + String(TimeTillFinish - Time));
+     }
+     else {
+       lcd.setCursor(0, 0);
+       lcd.print("                ");
+       lcd.setCursor(0, 0);
+       lcd.print("Turn right: " + String(TimeTillFinish - Time));
+     }
+     Time = millis();
+     int Left = LookLeft();
+     int Right = LookRight();
+     int Forward = LookForward();
+     PrintDistance(Left, Forward, Right);
+     delay(100);
     }
-    else {
-      lcd.setCursor(0, 0);
-      lcd.print("                ");
-      lcd.setCursor(0, 0);
-      lcd.print("Turn right: " + String(TimeTillFinish - Time));
-    }
-    Time = millis();
-    int Left = LookLeft();
-    int Right = LookRight();
-    int Forward = LookForward();
-    PrintDistance(Left, Forward, Right);
-    delay(100);
-  }
-} */
-//Serial.println ("Done");
+    } */
+  //Serial.println ("Done");
 }
 
 //accepts the Direction which it should turn in (True=Left False=Right)
@@ -506,6 +632,22 @@ int comp() {
   heading = heading * 180 / M_PI;
   RoundHeading = (int) heading + 0.5;
   return RoundHeading;
+}
+
+
+/*-----------------------------(WiFi)-------------------------------------------*/
+
+void makeGet() {
+  Serial.println("\nStarting connection to server...");
+  // if you get a connection, report back via serial:
+  if (client.connect(server, 80)) {
+    Serial.println("connected to server");
+    // Make a HTTP request:
+    client.println("GET /ardu-server/compact.php HTTP/1.1");
+    client.println("Host: www.knejad.co.uk");
+    client.println("Connection: close\r\n\r\n");
+  }
+  response = "";
 }
 
 

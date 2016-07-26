@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <WiFi.h>
 
-char ssid[] = "ssid"; //  your network SSID (name)
+char ssid[] = "ote123"; //  your network SSID (name)
 char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
@@ -105,7 +105,7 @@ void makeGet() {
   if (client.connect(server, 80)) {
     Serial.println("connected to server");
     // Make a HTTP request:
-    client.println("GET /ardu-server/ardu_compact.txt HTTP/1.1");
+    client.println("GET /ardu-server/compact.php HTTP/1.1");
     client.println("Host: www.knejad.co.uk");
     client.println("Connection: close\r\n\r\n");
   }

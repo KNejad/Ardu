@@ -33,5 +33,5 @@ if ($result->num_rows > 0) {
 }
 
 
-	echo $command; 
+	echo "BEGIN".$command; 
 ?>
