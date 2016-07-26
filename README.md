@@ -3,7 +3,7 @@ Autonomous multi mode Arduino robot
 
 
 
-Equipment Used:
+Equipment Used: <br>
 2 servos half rotation converted to full rotation by sticking the potentiometer to 90 degrees <br>
 3 Ultrasonic sensors in front. With a few resistors in order to work with the arduino due <br>
 1 lcd display with a wire underneath for the buttons to work.<br>
@@ -30,7 +30,7 @@ Explore Mode: E<br>
 Go to knejad.co.uk/ardu-server/ardu.php<br>
 
 Script syntax is:<br>
-<Direction><Amount>;<Direction><Amount>;<br>
+{Direction}{Amount};{Direction}{Amount};<br>
 eg: L200;R100;<br>
 
 Directions:<br>
