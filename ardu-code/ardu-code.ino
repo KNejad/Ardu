@@ -1,37 +1,3 @@
-//build number:0009
-//version created on the: 24/7/2016
-//DESCRIPTION: fully functioning vehicle with an lcd display showing relavent info. Running on an Arduino Mega.  With a pololu sensor.
-
-
-//Changes from last build:
-//use compass to turn the robot
-
-//equipment used:
-//2 servos half rotation converted to full rotation by sticking the potentiometer to 90 degrees
-//3 Ultrasonic sensors in front. With a few resistors in order to work with the arduino due
-//1 lcd display with a wire underneath for the buttons to work.
-//1 pololu IR Beacon
-//1 Arduino Mega
-//1 bluetooth tranciever
-//1 digital compass
-
-
-//for the sharp IRsensor on the back of the arduino
-//#include <SharpIR.h>
-//#define BackIRSensor A0
-//#define IrSensorModel 1080
-//SharpIR sharp(BackIRSensor, 25, 93, IrSensorModel);
-
-//Bluetooth:
-//App: Arduino Bluetooth Controller (Estado's ltd.)
-//Up: U
-//Left: L
-//Right: R
-//Down: D
-//Bluetooth Mode: B
-//Follow Mode: F
-//Explore Mode: E
-
 #define LeftUltrasonicTrig  50 //was 8
 #define LeftUltrasonicEcho  51 //was 9
 #define FrontUltrasonicTrig 48 //was 10
