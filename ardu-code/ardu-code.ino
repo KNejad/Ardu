@@ -1,17 +1,17 @@
 //distance sensors
-#define LeftUltrasonicTrig  50 
-#define LeftUltrasonicEcho  51 
-#define FrontUltrasonicTrig 48 
-#define FrontUltrasonicEcho 49 
-#define RightUltrasonicTrig 52 
-#define RightUltrasonicEcho 53 
+#define LeftUltrasonicTrig  50
+#define LeftUltrasonicEcho  51
+#define FrontUltrasonicTrig 48
+#define FrontUltrasonicEcho 49
+#define RightUltrasonicTrig 52
+#define RightUltrasonicEcho 53
 
 
 //polulu beacons
-#define NorthIRBeacon 24 
-#define EastIRBeacon 26  
-#define SouthIRBeacon 28 
-#define WestIRBeacon 30  
+#define NorthIRBeacon 24
+#define EastIRBeacon 26
+#define SouthIRBeacon 28
+#define WestIRBeacon 30
 
 //the 5 buttons on the lcd shield used for changing mode
 #define AnalogButton A0
@@ -414,29 +414,35 @@ void InWiFiMode() {
     int from = response.indexOf("BEGIN") + 5;
     String command = response.substring(from);
     boolean done = false;
+
+    command = command.substring(1);
+    int cut = command.indexOf(";");
+    int amount =  command.substring(0, cut).toInt();
+    Serial.println(amount);
+    command = command.substring(cut + 1);
+
     while (!done) {
       char instruction = command.charAt(0);
       if ( instruction == 'F') {
-        Serial.print("Moving Forwards:");
+        MoveForward();
+        delay(amount);
+
       } else {
         if ( instruction == 'L') {
-          Serial.print("Turning Left:");
+          Turn(amount, true);
         } else {
           if ( instruction == 'R') {
-            Serial.print("Turning Right:");
+            Turn(amount, false);
           } else {
             if ( instruction == 'B') {
-              Serial.print("Moving Backwards:");
+              MoveBackwards();
+              delay(amount);
             }
           }
         }
       }
 
-      command = command.substring(1);
-      int cut = command.indexOf(";");
-      int amount =  command.substring(0, cut).toInt();
-      Serial.println(amount);
-      command = command.substring(cut + 1);
+
       if (command.length() < 1) {
         done = true;
       }
