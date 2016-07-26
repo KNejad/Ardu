@@ -377,7 +377,7 @@ void Stop() {
 
 //accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
 void Turn(int Degrees, boolean TurnLeft) {
-  float DegreesNow, DegreesDifference, DegreesTo;
+  int DegreesNow, DegreesDifference, DegreesTo;
   //Serial.print("Turning...");
   //if TurnLeft is true turns left else turns right
   if (TurnLeft) {
@@ -528,7 +528,8 @@ void  PrintDistance(int Left, int Forward, int Right) {
 }
 /*-----------------------------(Compass)-------------------------------------------*/
 //it returns the heading in degrees
-float comp() {
+int comp() {
+  int RoundHeading;
   // read raw heading measurements from device
   mag.getHeading(&mx, &my, &mz);
 
@@ -537,6 +538,8 @@ float comp() {
   if (heading < 0)
     heading += 2 * M_PI;
   heading = heading * 180 / M_PI;
+  RoundHeading = (int) heading + 0.5;
+  return RoundHeading;
 }
 
 
