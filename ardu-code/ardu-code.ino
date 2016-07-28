@@ -1,10 +1,10 @@
 //distance sensors
-#define LeftUltrasonicTrig  50
-#define LeftUltrasonicEcho  51
+#define LeftUltrasonicTrig  46
+#define LeftUltrasonicEcho  47
 #define FrontUltrasonicTrig 48
 #define FrontUltrasonicEcho 49
-#define RightUltrasonicTrig 52
-#define RightUltrasonicEcho 53
+#define RightUltrasonicTrig 38
+#define RightUltrasonicEcho 39
 
 
 //polulu beacons
@@ -43,7 +43,7 @@ int16_t mx, my, mz;
 #include <WiFi.h>
 
 char ssid[] = "ssid"; //  your network SSID (name)
-char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
+char pass[] = "pass";    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
 int status = WL_IDLE_STATUS;
@@ -82,6 +82,7 @@ int DangerDistance = 10;
 
 void setup() {
 
+  Serial.begin(9600);
   //first thing it does is stop just incase the servos where still moving from before
   Stop();
 
@@ -90,10 +91,10 @@ void setup() {
   //initialize devise
   mag.initialize();
 
-  LeftWheel.attach(8);
-  RightWheel.attach(9);
+  LeftWheel.attach(42);
+  RightWheel.attach(43);
 
-  pinMode(AnalogButton, INPUT);
+  //pinMode(AnalogButton, INPUT);
 
   pinMode(FrontUltrasonicTrig, OUTPUT);
   pinMode(FrontUltrasonicEcho, INPUT);
@@ -110,7 +111,7 @@ void setup() {
 
   lcd.begin(16, 2);
 
-  Serial.begin(38400);
+
 }
 
 /* ------------------------------(LOOP)------------------------------*/
@@ -162,13 +163,14 @@ void loop() {
   }
 
 
-  if (analogRead(AnalogButton) < 40) {
+  if ( analogRead(AnalogButton) < 40  ) {
+
     Stop();
     lcd.clear();
-    lcd.println("Follow Mode");
+    lcd.println("Explore Mode");
     delay(1000);
-    FollowMode = true;
-    ExploreMode = false;
+    ExploreMode = true;
+    FollowMode = false;
     BluetoothMode = false;
     WiFiMode = false;
 
@@ -176,10 +178,10 @@ void loop() {
   if (100 < analogRead(AnalogButton) && analogRead(AnalogButton) < 260  ) {
     Stop();
     lcd.clear();
-    lcd.println("Explore Mode");
+    lcd.println("Follow Mode");
     delay(1000);
-    FollowMode = false;
-    ExploreMode = true;
+    ExploreMode = false;
+    FollowMode = true;
     BluetoothMode = false;
     WiFiMode = false;
 
@@ -189,8 +191,8 @@ void loop() {
     lcd.clear();
     lcd.println("Bluetooth Mode");
     delay(1000);
-    FollowMode = false;
     ExploreMode = false;
+    FollowMode = false;
     BluetoothMode = true;
     WiFiMode = false;
 
@@ -201,8 +203,8 @@ void loop() {
     lcd.clear();
     lcd.println("WiFi Mode");
     delay(1000);
-    FollowMode = false;
     ExploreMode = false;
+    FollowMode = false;
     BluetoothMode = false;
     WiFiMode = true;
   }
@@ -229,6 +231,10 @@ void loop() {
       // check for the presence of the shield:
       if (WiFi.status() == WL_NO_SHIELD) {
         Serial.println("WiFi shield not present");
+        lcd.setCursor(0, 0);
+        lcd.print("                ");
+        lcd.setCursor(0, 0);
+        lcd.print("WiFi shield not present");
         // don't continue:
         while (true);
       }
@@ -242,6 +248,11 @@ void loop() {
       while (status != WL_CONNECTED) {
         Serial.print("Attempting to connect to SSID: ");
         Serial.println(ssid);
+        lcd.setCursor(0, 0);
+        lcd.print("                ");
+        lcd.setCursor(0, 0);
+        lcd.print("Attempting to connect to SSID" + String(ssid));
+
         // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
         status = WiFi.begin(ssid, pass);
 
@@ -249,7 +260,10 @@ void loop() {
         delay(10000);
       }
       Serial.println("Connected to wifi");
-
+      lcd.setCursor(0, 0);
+      lcd.print("                ");
+      lcd.setCursor(0, 0);
+      lcd.print("Connected to WiFi");
       makeGet();
     }
     InWiFiMode();
@@ -291,12 +305,12 @@ void InBluetoothMode() {
     }
 
     if (Character == 'L') {
-      Turn(1, true);
+      Turn(0.1, true);
       lcd.clear();
       lcd.println("Left");
     }
     if (Character == 'R') {
-      Turn(1, false);
+      Turn(0.1, false);
       lcd.clear();
       lcd.println("Right");
     }
@@ -431,18 +445,19 @@ void InWiFiMode() {
     String command = response.substring(from);
     boolean done = false;
 
-    command = command.substring(1);
-    int cut = command.indexOf(";");
-    int amount =  command.substring(0, cut).toInt();
-    Serial.println(amount);
-    command = command.substring(cut + 1);
+
 
     while (!done) {
+
       char instruction = command.charAt(0);
+      command = command.substring(1);
+      int cut = command.indexOf(";");
+      int amount =  command.substring(0, cut).toInt();
+      command = command.substring(cut + 1);
+
       if ( instruction == 'F') {
         MoveForward();
         delay(amount);
-
       } else {
         if ( instruction == 'L') {
           Turn(amount, true);
@@ -490,7 +505,7 @@ void Stop() {
 }
 
 //accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
-void Turn(int Degrees, boolean TurnLeft) {
+void Turn(float Degrees, boolean TurnLeft) {
   float DegreesNow, DegreesDifference, DegreesTo;
   //Serial.print("Turning...");
   //if TurnLeft is true turns left else turns right
@@ -521,13 +536,10 @@ void Turn(int Degrees, boolean TurnLeft) {
     LeftWheel.write(180);
     RightWheel.write(180);
     while (DegreesNow <= DegreesTo) { // while you are not where you should be turn
-
       DegreesNow = comp();
-
     }
     Stop();
-    Serial.println(" stop");
-
+    Serial.println(" Stop");
   }
 
 
@@ -658,8 +670,6 @@ float comp() {
     heading += 2 * M_PI;
   heading = heading * 180 / M_PI;
   //RoundHeading = (int) heading + 0.5;
-  Serial.print(" Heading");
-  Serial.println(heading);
   return heading;
 }
 
