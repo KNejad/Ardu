@@ -479,28 +479,28 @@ void Turn(int Degrees, boolean TurnLeft) {
   //Serial.print("Turning...");
   //if TurnLeft is true turns left else turns right
   if (TurnLeft) {
-    DegreesNow = comp();
-    DegreesDifference = DegreesNow - Degrees;
+    DegreesNow = comp(); //take the heading from comp()
+    DegreesDifference = DegreesNow - Degrees; //find if the degreesTO is negative   
     if (DegreesDifference < 0) {
-      DegreesTo = 360 + DegreesDifference;
+      DegreesTo = 360 + DegreesDifference; //if it is negative make it positive
     } else {
-      DegreesTo = DegreesDifference;
+      DegreesTo = DegreesDifference; //if not keep it as is
     }
-    while (DegreesNow != DegreesTo) {
+    while (DegreesNow != DegreesTo) { // while you are not where you should be turn
       LeftWheel.write(180);
       RightWheel.write(180);
       DegreesNow = comp();
     }
     Stop();
-  } else {
-    DegreesNow = comp();
-    DegreesDifference = DegreesNow + Degrees;
+  } else { // if to turn right
+    DegreesNow = comp(); //take the heading from comp()
+    DegreesDifference = DegreesNow + Degrees; //find if the degreesTO is over 360
     if (DegreesDifference > 360) {
-      DegreesTo = DegreesDifference - 360;
+      DegreesTo = DegreesDifference - 360; //if it is make between 0-360
     } else {
-      DegreesTo = DegreesDifference;
+      DegreesTo = DegreesDifference; // if its under 360 leave it as is
     }
-    while (DegreesNow != DegreesTo) {
+    while (DegreesNow != DegreesTo) { // while you are not where you should be turn
       LeftWheel.write(0);
       RightWheel.write(0);
       DegreesNow = comp();
