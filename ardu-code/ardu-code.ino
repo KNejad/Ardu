@@ -110,7 +110,7 @@ void setup() {
 
   lcd.begin(16, 2);
 
-  Serial.begin(9600);
+  Serial.begin(38400);
 }
 
 /* ------------------------------(LOOP)------------------------------*/
@@ -157,7 +157,7 @@ void loop() {
       FollowMode = false;
       ExploreMode = false;
       BluetoothMode = false;
-      WiFiMode = false;
+      WiFiMode = true;
     }
   }
 
@@ -170,6 +170,8 @@ void loop() {
     FollowMode = true;
     ExploreMode = false;
     BluetoothMode = false;
+    WiFiMode = false;
+
   }
   if (100 < analogRead(AnalogButton) && analogRead(AnalogButton) < 260  ) {
     Stop();
@@ -179,6 +181,8 @@ void loop() {
     FollowMode = false;
     ExploreMode = true;
     BluetoothMode = false;
+    WiFiMode = false;
+
   }
   if (300 < analogRead(AnalogButton) && analogRead(AnalogButton) < 500  ) {
     Stop();
@@ -188,8 +192,20 @@ void loop() {
     FollowMode = false;
     ExploreMode = false;
     BluetoothMode = true;
-  }
+    WiFiMode = false;
 
+  }
+  if (530 < analogRead(AnalogButton) && analogRead(AnalogButton) < 700  ) {
+
+    Stop();
+    lcd.clear();
+    lcd.println("WiFi Mode");
+    delay(1000);
+    FollowMode = false;
+    ExploreMode = false;
+    BluetoothMode = false;
+    WiFiMode = true;
+  }
   if (FollowMode) {
     digitalWrite(PoluluPower , HIGH); //Turns the Polulu sensor on
     digitalWrite(PoluluE , HIGH); //Turns the Polulu E pin on
@@ -475,20 +491,22 @@ void Stop() {
 
 //accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
 void Turn(int Degrees, boolean TurnLeft) {
-  int DegreesNow, DegreesDifference, DegreesTo;
+  float DegreesNow, DegreesDifference, DegreesTo;
   //Serial.print("Turning...");
   //if TurnLeft is true turns left else turns right
   if (TurnLeft) {
     DegreesNow = comp(); //take the heading from comp()
-    DegreesDifference = DegreesNow - Degrees; //find if the degreesTO is negative   
+    DegreesDifference = DegreesNow - Degrees; //find if the degreesTO is negative
+
     if (DegreesDifference < 0) {
       DegreesTo = 360 + DegreesDifference; //if it is negative make it positive
     } else {
       DegreesTo = DegreesDifference; //if not keep it as is
     }
-    while (DegreesNow != DegreesTo) { // while you are not where you should be turn
-      LeftWheel.write(180);
-      RightWheel.write(180);
+    LeftWheel.write(0);
+    RightWheel.write(0);
+    while (DegreesNow >= DegreesTo) { // while you are not where you should be turn
+
       DegreesNow = comp();
     }
     Stop();
@@ -500,12 +518,15 @@ void Turn(int Degrees, boolean TurnLeft) {
     } else {
       DegreesTo = DegreesDifference; // if its under 360 leave it as is
     }
-    while (DegreesNow != DegreesTo) { // while you are not where you should be turn
-      LeftWheel.write(0);
-      RightWheel.write(0);
+    LeftWheel.write(180);
+    RightWheel.write(180);
+    while (DegreesNow <= DegreesTo) { // while you are not where you should be turn
+
       DegreesNow = comp();
+
     }
     Stop();
+    Serial.println(" stop");
 
   }
 
@@ -626,8 +647,8 @@ void  PrintDistance(int Left, int Forward, int Right) {
 }
 /*-----------------------------(Compass)-------------------------------------------*/
 //it returns the heading in degrees
-int comp() {
-  int RoundHeading;
+float comp() {
+  //int RoundHeading;
   // read raw heading measurements from device
   mag.getHeading(&mx, &my, &mz);
 
@@ -636,8 +657,10 @@ int comp() {
   if (heading < 0)
     heading += 2 * M_PI;
   heading = heading * 180 / M_PI;
-  RoundHeading = (int) heading + 0.5;
-  return RoundHeading;
+  //RoundHeading = (int) heading + 0.5;
+  Serial.print(" Heading");
+  Serial.println(heading);
+  return heading;
 }
 
 
