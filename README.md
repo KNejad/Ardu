@@ -44,3 +44,11 @@ Follows a polulu IR sensor which the user holds<br>
 
 ###Explore:
 Explores on its own whilst avoiding obstacles<br>
+
+
+##Setup:
+To upload new code remove the wire from pin 0 (Bluetooth)
+
+##Required Libraries
+I2Cdev.h</br>
+HMC5883L.h</br>

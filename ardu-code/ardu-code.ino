@@ -305,14 +305,25 @@ void InBluetoothMode() {
     }
 
     if (Character == 'L') {
-      Turn(0.1, true);
       lcd.clear();
       lcd.println("Left");
+      while (Character == 'L') {
+        Turn(1, true);
+        delay(50);
+        Character = Serial.read();
+      }
+      Stop();
     }
     if (Character == 'R') {
-      Turn(0.1, false);
       lcd.clear();
       lcd.println("Right");
+      while (Character == 'R') {
+        Turn(1, false);
+        delay(50);
+        Character = Serial.read();
+      }
+      Stop();
+
     }
     if (Character == 'U') {
       lcd.clear();
@@ -342,20 +353,17 @@ void InFollowMode() {
 
     //Serial.println("NORTH");
     if (LookForward() > DangerDistance && LookLeft() > DangerDistance && LookRight() > DangerDistance) {
-      lcd.clear();
-      lcd.print("I'm coming");
       MoveForward();
     }
     else {
-      lcd.clear();
-      lcd.print("I'll try to come");
       Stop();
       if (LookForward() < DangerDistance) {
         if (LookLeft() > LookRight()) {
-          Turn(1, true);
-
+          Turn(22, true);
+          Stop();
         } else {
-          Turn(1, false);
+          Turn(22, false);
+          Stop();
         }
         if (LookForward() > DangerDistance && LookLeft() > DangerDistance && LookRight() > DangerDistance) {
           MoveForward();
@@ -364,9 +372,11 @@ void InFollowMode() {
         }
       }
       else if (LookLeft() < DangerDistance) {
-        Turn(1, false);
+        Turn(22, false);
+        Stop();
       } else {
-        Turn(1, true);
+        Turn(22, true);
+        Stop();
       }
     }
     return;
@@ -422,8 +432,14 @@ void InExploreMode() {
       else
         Turn(90, false); //turn right 90 degrees
     }
-    if (Left < 30) Turn(45, false);
-    if (Right < 30)Turn(45, true);
+    if (Left < 30) {
+      Turn(45, false);
+      Stop();
+    }
+    if (Right < 30) {
+      Turn(45, true);
+      Stop();
+    }
   }
 }
 
@@ -504,14 +520,19 @@ void Stop() {
   //Serial.println ("Done");
 }
 
-//accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
-void Turn(float Degrees, boolean TurnLeft) {
+//Accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
+//Compass built by Redsylvester
+void Turn(int Degrees, boolean TurnLeft) {
   float DegreesNow, DegreesDifference, DegreesTo;
   //Serial.print("Turning...");
   //if TurnLeft is true turns left else turns right
   if (TurnLeft) {
+    lcd.setCursor(0, 0);
+    lcd.print("                ");
+    lcd.setCursor(0, 0);
+    lcd.print("Turning Left");
     DegreesNow = comp(); //take the heading from comp()
-    DegreesDifference = DegreesNow - Degrees; //find if the degreesTO is negative
+    DegreesDifference = DegreesNow - Degrees; //find if the degrees to is negative
 
     if (DegreesDifference < 0) {
       DegreesTo = 360 + DegreesDifference; //if it is negative make it positive
@@ -524,8 +545,11 @@ void Turn(float Degrees, boolean TurnLeft) {
 
       DegreesNow = comp();
     }
-    Stop();
   } else { // if to turn right
+    lcd.setCursor(0, 0);
+    lcd.print("                ");
+    lcd.setCursor(0, 0);
+    lcd.print("Turning Right");
     DegreesNow = comp(); //take the heading from comp()
     DegreesDifference = DegreesNow + Degrees; //find if the degreesTO is over 360
     if (DegreesDifference > 360) {
@@ -538,33 +562,7 @@ void Turn(float Degrees, boolean TurnLeft) {
     while (DegreesNow <= DegreesTo) { // while you are not where you should be turn
       DegreesNow = comp();
     }
-    Stop();
-    Serial.println(" Stop");
   }
-
-
-  /* while (Time < TimeTillFinish) {
-     if (TurnLeft) {
-       lcd.setCursor(0, 0);
-       lcd.print("                ");
-       lcd.setCursor(0, 0);
-       lcd.print("Turn left: " + String(TimeTillFinish - Time));
-     }
-     else {
-       lcd.setCursor(0, 0);
-       lcd.print("                ");
-       lcd.setCursor(0, 0);
-       lcd.print("Turn right: " + String(TimeTillFinish - Time));
-     }
-     Time = millis();
-     int Left = LookLeft();
-     int Right = LookRight();
-     int Forward = LookForward();
-     PrintDistance(Left, Forward, Right);
-     delay(100);
-    }
-    } */
-  //Serial.println ("Done");
 }
 
 //accepts the Direction which it should turn in (True=Left False=Right)
@@ -577,6 +575,8 @@ void TurnTillNorth(boolean Direction) {
     Turn(1, Direction);
     Timer++;
   }
+  Stop();
+
 }
 /* ------------------------------(Looking)------------------------------*/
 
@@ -659,6 +659,7 @@ void  PrintDistance(int Left, int Forward, int Right) {
 }
 /*-----------------------------(Compass)-------------------------------------------*/
 //it returns the heading in degrees
+//Built by Redsylvester
 float comp() {
   //int RoundHeading;
   // read raw heading measurements from device
