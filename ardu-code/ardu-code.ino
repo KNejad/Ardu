@@ -445,7 +445,7 @@ void InExploreMode() {
 
 void InWiFiMode() {
   // if there are incoming bytes available
-  // from the server, read them and print them:
+  // from the server, read them and add them to response
   while (client.available()) {
     char c = client.read();
     response += c;
@@ -477,9 +477,11 @@ void InWiFiMode() {
       } else {
         if ( instruction == 'L') {
           Turn(amount, true);
+          Stop();
         } else {
           if ( instruction == 'R') {
             Turn(amount, false);
+            Stop();
           } else {
             if ( instruction == 'B') {
               MoveBackwards();
