@@ -42,8 +42,8 @@ int16_t mx, my, mz;
 #include <SPI.h>
 #include <WiFi.h>
 
-char ssid[] = "ssid"; //  your network SSID (name)
-char pass[] = "pass";    // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "SSID"; //  your network SSID (name)
+char pass[] = "Password";    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
 int status = WL_IDLE_STATUS;
@@ -249,9 +249,7 @@ void loop() {
         Serial.print("Attempting to connect to SSID: ");
         Serial.println(ssid);
         lcd.setCursor(0, 0);
-        lcd.print("                ");
-        lcd.setCursor(0, 0);
-        lcd.print("Attempting to connect to SSID" + String(ssid));
+        lcd.print("SSID " + String(ssid));
 
         // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
         status = WiFi.begin(ssid, pass);
@@ -260,9 +258,7 @@ void loop() {
         delay(10000);
       }
       Serial.println("Connected to wifi");
-      lcd.setCursor(0, 0);
-      lcd.print("                ");
-      lcd.setCursor(0, 0);
+      lcd.clear();
       lcd.print("Connected to WiFi");
       makeGet();
     }
@@ -284,6 +280,8 @@ void InBluetoothMode() {
       FollowMode = false;
       ExploreMode = false;
       BluetoothMode = true;
+      WiFiMode = false;
+
     }
     if (Character == 'F') {
       Stop();
@@ -293,6 +291,8 @@ void InBluetoothMode() {
       FollowMode = true;
       ExploreMode = false;
       BluetoothMode = false;
+      WiFiMode = false;
+
     }
     if (Character == 'E') {
       Stop();
@@ -302,14 +302,25 @@ void InBluetoothMode() {
       FollowMode = false;
       ExploreMode = true;
       BluetoothMode = false;
-    }
+      WiFiMode = false;
 
+    }
+    if (Character == 'W') {
+      Stop();
+      lcd.clear();
+      lcd.println("WiFi Mode");
+      delay(1000);
+      FollowMode = false;
+      ExploreMode = false;
+      BluetoothMode = false;
+      WiFiMode = true;
+
+    }
     if (Character == 'L') {
       lcd.clear();
       lcd.println("Left");
       while (Character == 'L') {
-        Turn(1, true);
-        delay(50);
+        Turn(10, true);
         Character = Serial.read();
       }
       Stop();
@@ -318,8 +329,7 @@ void InBluetoothMode() {
       lcd.clear();
       lcd.println("Right");
       while (Character == 'R') {
-        Turn(1, false);
-        delay(50);
+        Turn(10, false);
         Character = Serial.read();
       }
       Stop();
@@ -474,6 +484,7 @@ void InWiFiMode() {
       if ( instruction == 'F') {
         MoveForward();
         delay(amount);
+        Stop();
       } else {
         if ( instruction == 'L') {
           Turn(amount, true);
@@ -486,6 +497,7 @@ void InWiFiMode() {
             if ( instruction == 'B') {
               MoveBackwards();
               delay(amount);
+              Stop();
             }
           }
         }
@@ -522,11 +534,10 @@ void Stop() {
   //Serial.println ("Done");
 }
 
-//Accepts the amount of time to turn for and the direction to turn (if true it turns left else right)
+//Accepts the degrees to turn for and the direction to turn (if true it turns left else right)
 //Compass built by Redsylvester
 void Turn(int Degrees, boolean TurnLeft) {
   float DegreesNow, DegreesDifference, DegreesTo;
-  //Serial.print("Turning...");
   //if TurnLeft is true turns left else turns right
   if (TurnLeft) {
     lcd.setCursor(0, 0);
@@ -684,6 +695,9 @@ void makeGet() {
   // if you get a connection, report back via serial:
   if (client.connect(server, 80)) {
     Serial.println("connected to server");
+    lcd.setCursor(0, 0);
+    lcd.print("Connected To Server");
+
     // Make a HTTP request:
     client.println("GET /ardu-server/compact.php HTTP/1.1");
     client.println("Host: www.knejad.co.uk");
