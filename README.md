@@ -39,6 +39,8 @@ R: Right (Degrees)<br>
 F: Forwards (Milliseconds)<br>
 B: Backwards (Milliseconds)<br>
 
+To connect to Wi-Fi network change ssid[] and pass[] variables to your networks ssid and password.
+
 ###Follow:
 Follows a polulu IR sensor which the user holds<br>
 
